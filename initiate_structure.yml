@@ -1,0 +1,54 @@
+---
+- name: Initiate ansible playbook structure.
+  hosts: localhost
+  vars_prompt:
+    - name: "PROJ_NAME"
+      prompt: "Please enter project name"
+      private: false
+
+  vars:
+    base_path: "{{ playbook_dir }}/{{ PROJ_NAME }}"
+    directories:
+      - "defaults"
+      - "files"
+      - "handlers"
+      - "meta"
+      - "tasks"
+      - "templates"
+      - "vars"
+
+  tasks:
+    - name: Create base project directory
+      ansible.builtin.file:
+        path: "{{ base_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Create inventory directory and file
+      ansible.builtin.file:
+        path: "{{ base_path }}/inventory{{ item }}"
+        state: "{{ 'directory' if item == '' else 'touch' }}"
+        mode: "{{ '0755' if item == '' else '0644' }}"
+      loop:
+        - ''  # Directory
+        - '/hosts'  # File
+
+    - name: Create main Proj YAML file
+      ansible.builtin.file:
+        path: "{{ base_path }}/{{ PROJ_NAME }}.yml"
+        state: touch
+        mode: "0644"
+
+    - name: Create role directories
+      ansible.builtin.file:
+        path: "{{ base_path }}/roles/{{ PROJ_NAME }}/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: "{{ directories }}"
+
+    - name: Create main.yml files in role directories
+      ansible.builtin.file:
+        path: "{{ base_path }}/roles/{{ PROJ_NAME }}/{{ item }}/main.yml"
+        state: touch
+        mode: "0644"
+      loop: "{{ directories }}"
